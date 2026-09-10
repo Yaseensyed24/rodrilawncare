@@ -1,88 +1,23 @@
-const menuBtn = document.querySelector('.menu-btn');
-const nav = document.querySelector('.nav');
-if (menuBtn && nav) {
-  menuBtn.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
-    menuBtn.setAttribute('aria-expanded', String(open));
-    menuBtn.textContent = open ? '×' : '☰';
-  });
-  document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => {
-    nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded','false'); menuBtn.textContent='☰';
-  }));
-}
-
-const serviceSelect = document.querySelector('select[name="service"]');
-document.querySelectorAll('[data-service]').forEach(card => card.addEventListener('click', () => {
-  const value = card.dataset.service;
-  if (serviceSelect) {
-    serviceSelect.value = value;
-    document.querySelector('#estimate').scrollIntoView({behavior:'smooth'});
-    serviceSelect.focus({preventScroll:true});
-  }
-}));
-
-const form = document.getElementById('quoteForm');
-const success = document.getElementById('success');
-const photos = document.getElementById('photos');
-const preview = document.getElementById('preview');
-let photoNames = [];
-
-if (photos) photos.addEventListener('change', () => {
-  preview.innerHTML = '';
-  photoNames = [];
-  [...photos.files].slice(0,6).forEach(file => {
-    photoNames.push(file.name);
-    const img = document.createElement('img');
-    img.alt = file.name;
-    img.src = URL.createObjectURL(file);
-    preview.appendChild(img);
-  });
-});
-
-function makeLeadText(data) {
-  return [
-    'RODRIGUEZ LAWN MAINTENANCE — FREE ESTIMATE REQUEST',
-    '', `Name: ${data.name || ''}`, `Phone: ${data.phone || ''}`, `Email: ${data.email || ''}`,
-    `City: ${data.city || ''}`, `Address: ${data.address || ''}`, `Service: ${data.service || ''}`,
-    `Frequency: ${data.frequency || ''}`, `Property: ${data.property_type || ''}`,
-    `Details: ${data.details || ''}`, `Photos selected: ${data.photoNames?.join(', ') || 'None'}`
-  ].join('\n');
-}
-
-let latestLeadText = '';
-if (form) form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const raw = Object.fromEntries(new FormData(form).entries());
-  const data = {...raw, photoNames, capturedAt:new Date().toISOString()};
-  latestLeadText = makeLeadText(data);
-  localStorage.setItem('rodriguez_demo_last_lead', JSON.stringify(data));
-  success.hidden = false;
-  form.querySelector('button[type="submit"]').textContent = 'Request Prepared ✓';
-  const email = encodeURIComponent(`New free estimate request — ${data.name}`);
-  const body = encodeURIComponent(latestLeadText);
-  const emailLead = document.getElementById('emailLead');
-  if (emailLead) emailLead.href = `mailto:rodriguezlawnmaintenance.ca@gmail.com?subject=${email}&body=${body}`;
-  success.scrollIntoView({behavior:'smooth', block:'nearest'});
-});
-
-const copyLead = document.getElementById('copyLead');
-if (copyLead) copyLead.addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(latestLeadText); copyLead.textContent = 'Copied ✓'; }
-  catch { copyLead.textContent = 'Select & copy from email'; }
-  setTimeout(() => copyLead.textContent = 'Copy request', 2200);
-});
-
-const lightbox = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightboxImg');
-const lightboxCaption = document.getElementById('lightboxCaption');
-function closeLightbox(){ if(lightbox) lightbox.hidden = true; document.body.style.overflow=''; }
-document.querySelectorAll('[data-lightbox]').forEach(photo => photo.addEventListener('click', () => {
-  if (!lightbox) return;
-  lightboxImg.src = photo.dataset.lightbox;
-  lightboxCaption.textContent = photo.querySelector('span')?.textContent || '';
-  lightbox.hidden = false;
-  document.body.style.overflow='hidden';
-}));
-document.querySelector('.lightbox-close')?.addEventListener('click', closeLightbox);
-lightbox?.addEventListener('click', e => { if(e.target === lightbox) closeLightbox(); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
+const KEY='avenor-os-v1';
+const services=['Landscape Design','Landscape Installation','Hardscaping','Outdoor Living','Irrigation','Outdoor Lighting','Lawn Maintenance','Garden Maintenance','Tree & Shrub Care'];
+const stages=['New','Contacted','Qualified','Site Visit','Estimate Sent','Won'];
+const seed=()=>({leads:[['Sarah Johnson','Landscape Installation',18500,'New'],['Michael Rodriguez','Irrigation',7200,'Contacted'],['Olivia Chen','Hardscaping',32000,'Qualified'],['Daniel Walker','Lawn Maintenance',4800,'Site Visit'],['Emma Martinez','Outdoor Lighting',12600,'Estimate Sent'],['James Wilson','Landscape Design',42000,'Won']].map((x,i)=>({id:'LEAD-'+(1041+i),name:x[0],service:x[1],value:x[2],stage:x[3],source:i%2?'Referral':'Website'})),customers:['Sarah Johnson','Michael Rodriguez','Olivia Chen','Daniel Walker','Emma Martinez','James Wilson'].map((name,i)=>({id:'CUS-'+(201+i),name,email:name.toLowerCase().replaceAll(' ','_')+'@example.com',phone:`(805) 555-${1200+i}`,ltv:[28400,12800,47200,8200,19600,31500][i],property:['123 Oak Street','44 Canyon View','810 Main Street'][i%3]})),jobs:Array.from({length:8},(_,i)=>({id:'JOB-'+(204+i),customer:['Sarah Johnson','Michael Rodriguez','Olivia Chen','Daniel Walker'][i%4],service:services[i%services.length],crew:['Alpha','Bravo','Charlie','Maintenance'][i%4],status:['Scheduled','Confirmed','In Progress','Completed'][i%4],date:`Sep ${10+i}, 2026`})),invoices:Array.from({length:7},(_,i)=>({id:'INV-'+(1030+i),customer:['Sarah Johnson','Michael Rodriguez','Olivia Chen'][i%3],amount:[8200,14500,6200,21800][i%4],status:['Paid','Pending','Paid','Overdue'][i%4]})),activities:[{text:'New website lead received from Sarah Johnson.',time:'8 min ago'},{text:'Estimate EST-1048 sent to Michael Rodriguez.',time:'42 min ago'},{text:'Crew Alpha completed JOB-207.',time:'2 hrs ago'}]});
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||seed();const save=()=>localStorage.setItem(KEY,JSON.stringify(db));const money=n=>'$'+Number(n).toLocaleString();
+const toast=t=>{const e=document.createElement('div');e.className='notice';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),1800)};
+function publicPage(){document.querySelector('#app').innerHTML=`<div class="top"><div class="wrap"><span>Serving Ventura County · Residential & Commercial</span><span>Call (805) 285-6039</span></div></div><header class="nav"><div class="wrap"><a class="logo" href="#">AVENOR<small>LANDSCAPE · DESIGN · BUILD · CARE</small></a><nav class="navlinks"><a href="#services">Services</a><a href="#work">Our work</a><a href="#process">Process</a><a href="#quote">Contact</a><a class="pill" href="#quote">Request a Quote</a><a href="#dashboard" class="muted">Business Portal</a></nav><button class="mobile-menu" onclick="document.querySelector('.navlinks').classList.toggle('mobile')">☰</button></div></header><section class="hero"><div class="wrap"><div class="eyebrow">Landscape design · build · care</div><h1>Outdoor spaces<br><em>worth coming home to.</em></h1><p>Thoughtful landscapes, considered materials, and dependable care for homes and properties across Ventura County.</p><div class="actions"><a class="btn light" href="#quote">Start a project →</a><a class="btn outline" href="#work">Explore our work</a></div><div class="proof"><span>✓ Design + Build</span><span>✓ Ongoing Maintenance</span><span>✓ Residential + Commercial</span></div></div></section><section class="section"><div class="wrap split"><div><p class="kicker">A better kind of landscape company</p><h2>We build places people actually use.</h2></div><div><p class="lead">From the first site walk to the last planting, Avenor brings design, installation and long-term care together.</p><a class="pill" href="#quote">Talk about your property →</a></div></div></section><section class="section dark" id="services"><div class="wrap"><p class="kicker">Capabilities</p><h2>One team, from soil to finish.</h2><div class="services">${services.map((s,i)=>`<article class="card"><span class="num">${String(i+1).padStart(2,'0')}</span><h3>${s}</h3><p>Thoughtful planning, clean execution, and a finished space built around the property.</p></article>`).join('')}</div></div></section><section class="section" id="work"><div class="wrap"><p class="kicker">Selected work</p><h2>Landscapes with a sense of place.</h2><div class="workgrid"><div class="photo big"></div><div><div class="photo small1"></div><div class="photo small2" style="margin-top:14px"></div></div></div></div></section><section class="section" id="process"><div class="wrap"><p class="kicker">Our process</p><h2>Simple for the owner. Detailed behind the scenes.</h2><div class="steps"><div class="step"><b>01</b><h3>Discover</h3><p>Understand the property, priorities, budget and timeline.</p></div><div class="step"><b>02</b><h3>Plan</h3><p>Shape the scope and estimate.</p></div><div class="step"><b>03</b><h3>Build</h3><p>Coordinate crews and site work.</p></div><div class="step"><b>04</b><h3>Care</h3><p>Keep the finished landscape looking considered.</p></div></div><div class="cta"><p class="kicker">The other side</p><h2>Behind every beautiful yard is an organized business.</h2><p class="lead">Leads, customers, estimates, jobs, crews, invoices and reporting connected in one workflow.</p><a class="btn light" href="#dashboard">Open Business Portal →</a></div></div></section><section class="section" id="quote"><div class="wrap split"><div><p class="kicker">Start a conversation</p><h2>Tell us what you're imagining.</h2><p class="lead">Submit a request and watch it become a live CRM lead inside the business portal.</p></div><form class="quote" id="quoteForm"><div class="formgrid"><div class="field"><label>Name *</label><input name="name" required placeholder="Sarah Johnson"></div><div class="field"><label>Phone *</label><input name="phone" required placeholder="(805) 555-0123"></div></div><div class="formgrid"><div class="field"><label>City *</label><input name="city" required placeholder="Camarillo"></div><div class="field"><label>Service *</label><select name="service" required><option value="">Choose</option>${services.map(s=>`<option>${s}</option>`).join('')}</select></div></div><div class="field"><label>Budget</label><select name="budget"><option>Not sure</option><option>Under $5k</option><option>$5k–$15k</option><option>$15k–$30k</option><option>$30k+</option></select></div><div class="field"><label>Property details</label><textarea name="details" rows="4" placeholder="Front + backyard, pool area, irrigation..."></textarea></div><button class="btn" style="background:var(--forest);color:#fff;width:100%">Send Project Request →</button><div id="formSuccess" class="success hidden"></div></form></div></section><footer class="footer"><div class="wrap"><div><div class="logo">AVENOR</div><p>Landscape · Design · Build · Care</p></div><a href="#dashboard">Business Portal</a></div></footer>`;document.querySelector('#quoteForm').addEventListener('submit',submitLead)}
+function submitLead(e){e.preventDefault();const f=new FormData(e.currentTarget),b=String(f.get('budget'));const lead={id:'LEAD-'+(1050+db.leads.length),name:f.get('name'),phone:f.get('phone'),city:f.get('city'),service:f.get('service'),details:f.get('details'),value:b.includes('30')?35000:b.includes('15')?22000:b.includes('5')?9000:6000,stage:'New',source:'Website',priority:'High'};db.leads.unshift(lead);db.activities.unshift({text:`New website lead received from ${lead.name}.`,time:'Just now'});save();document.querySelector('#formSuccess').classList.remove('hidden');document.querySelector('#formSuccess').innerHTML=`<strong>Request received ✓</strong><br>${lead.name} is now a <b>New Lead</b>. <a href="#dashboard/leads">Open CRM →</a>`;toast('Lead created in CRM');e.currentTarget.reset()}
+const side=(label,hash)=>`<button class="sidebtn ${location.hash==='#'+hash?'active':''}" onclick="location.hash='${hash}'">${label}</button>`;
+function dashboard(page='overview'){const v={overview:overview,leads:leads,customers:customers,jobs:jobs,estimates:estimates,invoices:invoices,reports:reports,settings:settings}[page]||overview;document.querySelector('#app').innerHTML=`<div class="dashboard"><header class="dashbar"><a class="logo" href="#dashboard">AVENOR<small>BUSINESS OS</small></a><div><a href="#" class="muted">← Public site</a> &nbsp; <button class="pill" onclick="resetDemo()">Reset Demo</button></div></header><div class="dashbody"><aside class="sidebar"><div class="logo">OPERATIONS</div>${side('Overview','dashboard')}${side('Leads','dashboard/leads')}${side('Customers','dashboard/customers')}${side('Jobs','dashboard/jobs')}${side('Estimates','dashboard/estimates')}${side('Invoices','dashboard/invoices')}${side('Reports','dashboard/reports')}${side('Settings','dashboard/settings')}</aside><main class="dashmain">${v()}</main></div></div>`}
+function overview(){const pipe=db.leads.filter(x=>x.stage!=='Won').reduce((a,x)=>a+x.value,0);return `<div class="dashhead"><div><p class="kicker">Business overview</p><h1>Good morning, James.</h1><p class="muted">Here's what's happening across Avenor today.</p></div><button class="pill" onclick="location.hash='dashboard/leads'">View pipeline →</button></div><div class="metrics"><div class="metric"><small>New leads</small><strong>${db.leads.filter(x=>x.stage==='New').length}</strong><span class="up">+18.4% this month</span></div><div class="metric"><small>Open pipeline</small><strong>${money(pipe)}</strong><span class="up">Active opportunities</span></div><div class="metric"><small>Active jobs</small><strong>${db.jobs.filter(x=>x.status!=='Completed').length}</strong><span class="up">Across 4 crews</span></div><div class="metric"><small>Revenue this month</small><strong>$84,250</strong><span class="up">+12.8%</span></div></div><div class="panelgrid"><section class="panel"><h3>Revenue trend</h3><div class="chart">${[42,56,48,72,61,84,96,78,91,88,100,94].map((n,i)=>`<div class="bar" style="height:${n}%"><span>${['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'][i]}</span></div>`).join('')}</div></section><section class="panel"><h3>Recent activity</h3>${db.activities.map(a=>`<p style="padding:10px 0;border-bottom:1px solid #eee;margin:0"><b>${a.text}</b><br><small class="muted">${a.time}</small></p>`).join('')}</section></div>`}
+function leads(){return `<div class="dashhead"><div><p class="kicker">CRM</p><h1>Lead pipeline</h1><p class="muted">From first contact to signed work.</p></div><button class="pill" onclick="location.hash='quote'">+ New website lead</button></div><div class="kanban">${stages.slice(0,4).map(s=>`<section class="column"><h4>${s.toUpperCase()} · ${db.leads.filter(x=>x.stage===s).length}</h4>${db.leads.filter(x=>x.stage===s).map(l=>`<article class="leadcard"><strong>${l.name}</strong><small>${l.service}<br>${money(l.value)} · ${l.city}</small><span class="badge">${l.priority||'Normal'}</span><button onclick="advanceLead('${l.id}')">Advance →</button></article>`).join('')}</section>`).join('')}</div><div class="panel" style="margin-top:14px"><h3>All opportunities</h3><table class="table"><thead><tr><th>Lead</th><th>Service</th><th>Value</th><th>Source</th><th>Stage</th></tr></thead><tbody>${db.leads.map(l=>`<tr><td><b>${l.name}</b></td><td>${l.service}</td><td>${money(l.value)}</td><td>${l.source}</td><td><span class="badge">${l.stage}</span></td></tr>`).join('')}</tbody></table></div>`}
+function customers(){return `<div class="dashhead"><div><p class="kicker">CRM</p><h1>Customers & properties</h1><p class="muted">Property-aware customer records.</p></div></div><div class="panel"><table class="table"><thead><tr><th>Customer</th><th>Property</th><th>Phone</th><th>Lifetime value</th><th>Status</th></tr></thead><tbody>${db.customers.map(c=>`<tr><td><b>${c.name}</b><br><small class="muted">${c.email}</small></td><td>${c.property}</td><td>${c.phone}</td><td>${money(c.ltv)}</td><td><span class="badge">Active</span></td></tr>`).join('')}</tbody></table></div>`}
+function jobs(){return `<div class="dashhead"><div><p class="kicker">Operations</p><h1>Jobs & crews</h1><p class="muted">Field work, assignments and completion status.</p></div></div><div class="metrics"><div class="metric"><small>Scheduled</small><strong>${db.jobs.filter(x=>x.status==='Scheduled').length}</strong></div><div class="metric"><small>In progress</small><strong>${db.jobs.filter(x=>x.status==='In Progress').length}</strong></div><div class="metric"><small>Completed</small><strong>${db.jobs.filter(x=>x.status==='Completed').length}</strong></div><div class="metric"><small>Crews</small><strong>4</strong></div></div><div class="panel" style="margin-top:14px"><table class="table"><thead><tr><th>Job</th><th>Customer</th><th>Service</th><th>Crew</th><th>Date</th><th>Status</th></tr></thead><tbody>${db.jobs.map(j=>`<tr><td><b>${j.id}</b></td><td>${j.customer}</td><td>${j.service}</td><td>Crew ${j.crew}</td><td>${j.date}</td><td><button class="badge" onclick="advanceJob('${j.id}')">${j.status} →</button></td></tr>`).join('')}</tbody></table></div>`}
+function estimates(){return `<div class="dashhead"><div><p class="kicker">Sales</p><h1>Estimates</h1><p class="muted">Quotes moving toward approved work.</p></div><button class="pill" onclick="toast('Estimate editor opened — demo')">+ Create estimate</button></div><div class="panel"><table class="table"><thead><tr><th>Estimate</th><th>Customer</th><th>Scope</th><th>Total</th><th>Status</th></tr></thead><tbody>${['EST-1048','EST-1049','EST-1050','EST-1051','EST-1052'].map((id,i)=>`<tr><td><b>${id}</b></td><td>${db.customers[i].name}</td><td>${services[i]}</td><td>${money([20655,14800,32400,8750,12700][i])}</td><td><span class="badge">${['Sent','Viewed','Approved','Draft','Sent'][i]}</span></td></tr>`).join('')}</tbody></table></div>`}
+function invoices(){return `<div class="dashhead"><div><p class="kicker">Financials</p><h1>Invoices</h1><p class="muted">Track money from completed work.</p></div></div><div class="metrics"><div class="metric"><small>Paid</small><strong>${money(db.invoices.filter(x=>x.status==='Paid').reduce((a,x)=>a+x.amount,0))}</strong></div><div class="metric"><small>Pending</small><strong>${money(db.invoices.filter(x=>x.status==='Pending').reduce((a,x)=>a+x.amount,0))}</strong></div><div class="metric"><small>Overdue</small><strong>${money(db.invoices.filter(x=>x.status==='Overdue').reduce((a,x)=>a+x.amount,0))}</strong></div><div class="metric"><small>Invoices</small><strong>${db.invoices.length}</strong></div></div><div class="panel" style="margin-top:14px"><table class="table"><thead><tr><th>Invoice</th><th>Customer</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>${db.invoices.map(x=>`<tr><td>${x.id}</td><td>${x.customer}</td><td><b>${money(x.amount)}</b></td><td><span class="badge">${x.status}</span></td><td>${x.status!=='Paid'?`<button class="pill" style="padding:7px 11px" onclick="payInvoice('${x.id}')">Mark paid</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`}
+function reports(){return `<div class="dashhead"><div><p class="kicker">Analytics</p><h1>Business performance</h1><p class="muted">A decision-ready view of sales and operations.</p></div></div><div class="metrics"><div class="metric"><small>Lead conversion</small><strong>${Math.round(db.leads.filter(x=>x.stage==='Won').length/db.leads.length*100)}%</strong></div><div class="metric"><small>Average project</small><strong>$12,840</strong><span class="up">+9.2%</span></div><div class="metric"><small>Open pipeline</small><strong>${money(db.leads.filter(x=>x.stage!=='Won').reduce((a,x)=>a+x.value,0))}</strong></div><div class="metric"><small>Repeat customers</small><strong>68%</strong></div></div><div class="panelgrid"><div class="panel"><h3>Revenue by service</h3>${services.slice(0,6).map((s,i)=>`<div style="margin:18px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><b>${s}</b><span>${money([124000,82000,61000,48000,38000,19000][i])}</span></div><div style="height:8px;background:#e9ece5;border-radius:9px;margin-top:7px"><div style="height:100%;width:${[92,76,61,52,43,29][i]}%;background:#78917d;border-radius:9px"></div></div></div>`).join('')}</div><div class="panel"><h3>Lead sources</h3><div style="font:800 42px Manrope;margin:25px 0">$246.8k</div><p class="muted">Open opportunity value</p><span class="badge">Website 42%</span> <span class="badge">Referral 28%</span></div></div>`}
+function settings(){return `<div class="dashhead"><div><p class="kicker">System</p><h1>Settings</h1><p class="muted">Demo controls.</p></div></div><div class="panel"><h3>Avenor Business OS</h3><p class="muted">Frontend demo · localStorage persistence · no real customer data.</p><button class="pill" onclick="resetDemo()">Reset all demo data</button></div>`}
+function advanceLead(id){const l=db.leads.find(x=>x.id===id),i=stages.indexOf(l.stage);l.stage=stages[Math.min(i+1,5)];db.activities.unshift({text:`${l.name} moved to ${l.stage}.`,time:'Just now'});save();toast(`Lead moved to ${l.stage}`);dashboard('leads')}
+function advanceJob(id){const j=db.jobs.find(x=>x.id===id),a=['Scheduled','Confirmed','In Progress','Completed'];j.status=a[Math.min(a.indexOf(j.status)+1,3)];save();toast(`${j.id} → ${j.status}`);dashboard('jobs')}
+function payInvoice(id){const x=db.invoices.find(i=>i.id===id);x.status='Paid';db.activities.unshift({text:`Invoice ${id} marked paid.`,time:'Just now'});save();toast(`${id} marked paid`);dashboard('invoices')}
+function resetDemo(){if(confirm('Reset Avenor demo data?')){db=seed();save();dashboard('overview')}}
+function route(){const h=location.hash.slice(1);if(h.startsWith('dashboard'))dashboard(h.split('/')[1]||'overview');else publicPage()};addEventListener('hashchange',route);route();
