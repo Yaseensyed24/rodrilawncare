@@ -1,33 +1,40 @@
-# Rodriguez Lawn Maintenance — mobile-first website demo
+# Avenor — Landscaping Business OS Demo
 
-A static demo designed around phone-first lead generation rather than a generic brochure site.
+A premium landscaping website connected to a functional frontend CRM / operations dashboard demo.
 
-## What changed in this version
-- Mobile-first layout with large tap targets and persistent Call / Free Estimate actions.
-- Fast actions for Call, Text, and Estimate from the top of the page.
-- Natural-looking lawn-care photography from free-to-use Pexels sources for the concept; these should be replaced by the owner's real job photos before launch.
-- Service cards that jump directly into the estimate form with the selected service prefilled.
-- Optional multi-photo yard upload preview.
-- Estimate request stored locally for demo testing.
-- Generates a formatted lead summary with Copy Request and Open Email actions.
-- Gallery lightbox for viewing work photos.
-- Weekly / biweekly selector section, service-area section, FAQ, and local-business CTAs.
-- No invented reviews, prices, licenses, guarantees, years in business, or other unverified claims.
+## Demo flow
 
-## Run locally
-Open `index.html` in a browser, or run a simple server:
+Public website → Request a Quote → New CRM Lead → Lead Pipeline → Customers → Estimates → Jobs & Crews → Invoices → Reports.
+
+## Included
+
+- Premium responsive landscaping marketing site
+- Services, work, process and quote sections
+- Multi-field quote request
+- Quote submissions become persistent CRM leads
+- localStorage-backed demo data
+- Lead pipeline with stage advancement
+- Customer/property records
+- Jobs and crew status workflow
+- Estimate list
+- Invoice dashboard with Mark Paid action
+- Business analytics / reporting
+- Settings + Reset Demo Data
+- Responsive mobile layouts
+- No backend or real customer data required
+
+## Run
+
+Open `index.html` directly or serve the folder:
 
 ```bash
-cd rodriguez-lawn-demo
 python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000`.
 
-## Before production
-1. Replace concept photography with Rodriguez's real work photos.
-2. Connect the estimate form to an email/CRM endpoint or serverless function.
-3. Store uploaded images securely rather than only previewing them in-browser.
-4. Add the owner's real reviews, exact service-area boundaries, logo file, and any verified business credentials.
-5. Add analytics for call clicks, text clicks, estimate starts, estimate submits, and photo uploads.
-6. Connect Google Business Profile / Maps only after confirming the correct business listing.
+## Demo
+
+Use **Business Portal** in the public navigation or `#dashboard`.
+
+The project is intentionally frontend-only so the workflow can be demonstrated without a database, authentication service, payments, SMS, or email infrastructure. Those can be connected later without changing the product flow.
